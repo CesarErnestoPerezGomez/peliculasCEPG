@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1018132799724",
+    "project_id": "moviles-82567",
+    "storage_bucket": "moviles-82567.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1018132799724:android:597f2d2d71dc689a6945c9",
+        "android_client_info": {
+          "package_name": "com.example.peliculascepg"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtYzgJ2WUk9ZqI6HkCbBM0fVGtkRCxm1s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
