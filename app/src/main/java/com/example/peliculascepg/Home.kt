@@ -11,6 +11,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
@@ -22,6 +25,10 @@ class Home : AppCompatActivity() {
 
     private val database = Firebase.database
     private val myRef = database.getReference("peliculas")
+
+    private lateinit var recycler: RecyclerView
+    private lateinit var adapter: PeliRecyclerAdapter
+    private val peliculas = ArrayList<PeliculaUI>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,18 +45,51 @@ class Home : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         auth = Firebase.auth
-
         val usuarioActual = auth.currentUser
         if (usuarioActual == null) {
             irALogin()
+            return
         } else {
             Toast.makeText(this, "Bienvenido ${usuarioActual.email}", Toast.LENGTH_LONG).show()
         }
 
+        recycler = findViewById(R.id.recyclerPeliculas)
+        recycler.layoutManager = LinearLayoutManager(this)
+
+        adapter = PeliRecyclerAdapter(peliculas) { peli ->
+            // Click en item => editar/eliminar
+            val intent = Intent(this, AddEditMovieActivity::class.java)
+            intent.putExtra("modo", "editar")
+            intent.putExtra("id", peli.id)
+            intent.putExtra("nombre", peli.nombre)
+            intent.putExtra("genero", peli.genero)
+            intent.putExtra("anio", peli.anio)
+            startActivity(intent)
+        }
+        recycler.adapter = adapter
+
+        findViewById<FloatingActionButton>(R.id.floatingActionButton).setOnClickListener {
+            val intent = Intent(this, AddEditMovieActivity::class.java)
+            intent.putExtra("modo", "agregar")
+            startActivity(intent)
+        }
+
+        // Leer en tiempo real
         myRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val value = snapshot.value
-                Log.d("base-tiempo-real", "Value is: $value")
+                peliculas.clear()
+
+                snapshot.children.forEach { nodo ->
+                    val id = nodo.key ?: return@forEach
+                    val nombre = nodo.child("nombre").value?.toString() ?: ""
+                    val genero = nodo.child("genero").value?.toString() ?: ""
+                    val anio = nodo.child("anio").value?.toString() ?: ""
+
+                    peliculas.add(PeliculaUI(id, nombre, genero, anio))
+                }
+
+                adapter.actualizar(peliculas)
+                Log.d("base-tiempo-real", "Peliculas: ${peliculas.size}")
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -71,21 +111,17 @@ class Home : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
         return when (item.itemId) {
-
             R.id.logout -> {
                 auth.signOut()
                 Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_LONG).show()
                 irALogin()
                 true
             }
-
             R.id.perfil -> {
                 Toast.makeText(this, "Perfil", Toast.LENGTH_SHORT).show()
                 true
             }
-
             else -> super.onOptionsItemSelected(item)
         }
     }
